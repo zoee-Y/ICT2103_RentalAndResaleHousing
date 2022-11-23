@@ -1,10 +1,19 @@
 import pandas.core.groupby.groupby
-from flask import Flask
+from flask import Flask, render_template
+from flask_navigation import Navigation
 import mariadb
 import sys
 import pandas as pd
 
 app = Flask(__name__)
+nav = Navigation(app)
+
+nav.Bar('top', [
+    nav.Item('Home', 'Home'),
+    nav.Item('Rental', 'GRental'),
+    nav.Item('Resale', 'GResale'),
+    #add more if needed
+])
 
 try:
     conn = mariadb.connect(
@@ -235,14 +244,27 @@ def testDisplayData():
         print("Error displaying test data: ", {e})
         return "<html><body>Error displaying test data!</body></html>"
 
-@app.route("/")
-def index():
-    setUpTablesAndData()
+# uncomment if u wanna add to database and see if records are added
+#@app.route("/")
+#def index():
 
-    #insertRentDataFromCSV() #uncomment this if you want to insert data
+    #setUpTablesAndData()
+     #insertRentDataFromCSV() #uncomment this if you want to insert data
     #insertResaleDataFromCSV()
+    #return "<html><body>" + displayRentData() + displayResaleData() + "</html></body>"
+@app.route('/')
+def Home():
+    return render_template('Home.html')
+@app.route('/RentalGraphs')
+def GRental():
+    return render_template('Rental_Graph.html')
 
-    return "<html><body>" + displayRentData() + displayResaleData() + "</html></body>"
+@app.route('/ResaleGraphs')
+def GResale():
+    return render_template('Resale_Graph.html')
+
+
+
 
 
 
