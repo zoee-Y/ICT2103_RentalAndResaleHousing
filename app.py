@@ -73,6 +73,8 @@ def setUpTablesAndData():
             rentalFees int NOT NULL,
             postalDistrict int NOT NULL,
             floorArea varchar(50) NOT NULL,
+            YearOfLease varchar(50) NOT NULL,
+            MonthOfLease varchar(50) NOT NULL,
             FOREIGN KEY (houseTypeID) REFERENCES HouseType(houseTypeID)
             );
         ''')
@@ -107,12 +109,14 @@ def setUpTablesAndData():
         print("Error during setup: ", {e})
         print("SQL statement: ", cur.statement)
 
-
+def test():
+    data = pd.read_csv("./rental data.csv")
+    df = pd.DataFrame(data)
+    print(df)
 def insertRentDataFromCSV():
     try:
         data = pd.read_csv("./rental data.csv")
         df = pd.DataFrame(data)
-
         for row in df.itertuples():
             try:
                 cur.execute('''
@@ -120,10 +124,12 @@ def insertRentDataFromCSV():
                    houseTypeID,
                    rentalFees,
                    postalDistrict,
-                   floorArea)
+                   floorArea,
+                   YearOfLease,
+                   MonthOfLease)
 
                    SELECT houseTypeID, ''' + str(row.monthly_gross_rent) + ", " + str(
-                    row.postal_district) + ", '" + row.floor_area + "'" + ''' FROM HouseType
+                    row.postal_district) + ", '" + row.floor_area +"', " + str(row.Lease_Commencement_Year) +", '" + row.Lease_Commencement_Month  +"' "+ ''' FROM HouseType
                        WHERE houseType = 'Rent' AND numberOfRooms = ''' + str(row.no_of_bedroom))
 
                 conn.commit()
@@ -219,10 +225,10 @@ def displayRentData():
         return "<html><body>Error displaying data!</body></html>"
 
 
+
 def testDisplayData():
     try:
         cur.execute("SELECT r.rentalFees, r.postalDistrict, h.numberOfRooms, r.floorArea FROM Rent as r, HouseType as h WHERE r.houseTypeID = h.houseTypeID")
-
         s = "<table style='border:1px solid red; border-collapse: collapse;'>"
         s = s + '''<tr style='border-bottom: 1px solid black'>
             <td style='padding: 10px; border-right: 1px solid blue'>Resale price/Resale</td>
@@ -232,12 +238,15 @@ def testDisplayData():
             <td style='padding: 10px; border-right: 1px solid blue'>Floor area (sqm)</td>
             <td style='padding: 10px; border-right: 1px solid blue'>Remaining lease</td>
             '''
+
         for row in cur:
             s = s + "<tr style='border-bottom: 1px solid black'>"
             for x in row:
                 s = s + "<td style='padding: 10px; border-right: 1px solid blue'>" + str(x) + "</td>"
             s = s + "</tr>"
         s = s + "</table>"
+        rv = cur.fetchall()
+        print(rv)
 
         return s
     except mariadb.Error as e:
@@ -245,19 +254,22 @@ def testDisplayData():
         return "<html><body>Error displaying test data!</body></html>"
 
 # uncomment if u wanna add to database and see if records are added
-#@app.route("/")
-#def index():
+@app.route("/")
 
+def index():
+    #testDisplayData()
     #setUpTablesAndData()
-     #insertRentDataFromCSV() #uncomment this if you want to insert data
+    #insertRentDataFromCSV() #uncomment this if you want to insert data
     #insertResaleDataFromCSV()
-    #return "<html><body>" + displayRentData() + displayResaleData() + "</html></body>"
-@app.route('/')
-def Home():
-    return render_template('Home.html')
+    return "<html><body>" + displayRentData() + displayResaleData() + "</html></body>"
+
+#@app.route('/')
+#def Home():
+ #   test()
+  #  return render_template('Home.html')
 @app.route('/RentalGraphs')
 def GRental():
-    return render_template('Rental_Graph.html')
+    return render_template('Rental_Graph1.html')
 
 @app.route('/ResaleGraphs')
 def GResale():
