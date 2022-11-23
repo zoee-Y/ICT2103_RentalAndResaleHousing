@@ -245,13 +245,14 @@ def testDisplayData():
         return "<html><body>Error displaying test data!</body></html>"
 
 # uncomment if u wanna add to database and see if records are added
-#@app.route("/")
-#def index():
+@app.route("/")
+def index():
 
-    #setUpTablesAndData()
+    setUpTablesAndData()
      #insertRentDataFromCSV() #uncomment this if you want to insert data
     #insertResaleDataFromCSV()
-    #return "<html><body>" + displayRentData() + displayResaleData() + "</html></body>"
+    return "<html><body>" + displayRentData() + displayResaleData() + "</html></body>"
+'''
 @app.route('/')
 def Home():
     return render_template('Home.html')
@@ -262,7 +263,7 @@ def GRental():
 @app.route('/ResaleGraphs')
 def GResale():
     return render_template('Resale_Graph.html')
-
+'''
 
 
 
