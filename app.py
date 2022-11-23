@@ -109,10 +109,7 @@ def setUpTablesAndData():
         print("Error during setup: ", {e})
         print("SQL statement: ", cur.statement)
 
-def test():
-    data = pd.read_csv("./rental data.csv")
-    df = pd.DataFrame(data)
-    print(df)
+
 def insertRentDataFromCSV():
     try:
         data = pd.read_csv("./rental data.csv")
