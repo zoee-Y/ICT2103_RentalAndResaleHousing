@@ -1,4 +1,4 @@
-floor_area,no_of_bedroom,monthly_gross_rent,postal_district,Lease_Commencement_Year,Lease_Commencement_Month
+floor_area,no_of_bedroom,monthly_gross_rent,postal_district,lease_commencement_year,lease_commencement_month
 100 to 110,2,5500,10,2019,Mar
 40 to 50,1,2300,10,2021,Jan
 80 to 90,2,3000,10,2021,Jun
