@@ -4,6 +4,9 @@ from flask_navigation import Navigation
 import mariadb
 import sys
 import pandas as pd
+import json
+import plotly
+import plotly.express as px
 
 app = Flask(__name__)
 nav = Navigation(app)
@@ -11,7 +14,7 @@ nav = Navigation(app)
 nav.Bar('top', [
     nav.Item('Home', 'Home'),
     nav.Item('Rental', 'GRental'),
-    nav.Item('Resale', 'GResale'),
+    nav.Item('Resale', 'Resaleindex'),
     #add more if needed
 ])
 
@@ -32,64 +35,63 @@ def setUpTablesAndData():
     try:
         #create user table
         cur.execute('''CREATE TABLE IF NOT EXISTS
-            User(
-            userID int NOT NULL PRIMARY KEY AUTO_INCREMENT,
+            user(
+            user_id int NOT NULL PRIMARY KEY AUTO_INCREMENT,
             username varchar(50) NOT NULL,
             password varchar(50) NOT NULL,
-            name varchar(100) NOT NULL,
-            preferences varchar(255) NULL
-        );
+            name varchar(100) NOT NULL
+            );
         ''')
 
         #create housetype table
         cur.execute('''CREATE TABLE IF NOT EXISTS
-            HouseType(
-            houseTypeID int NOT NULL PRIMARY KEY AUTO_INCREMENT,
-            houseType varchar(50) NOT NULL,
-            numberOfRooms int NOT NULL
+            housetype(
+            house_type_id int NOT NULL PRIMARY KEY AUTO_INCREMENT,
+            house_type varchar(50) NOT NULL,
+            number_of_rooms int NOT NULL
         );
         ''')
 
         #create preference table
         #foreign keys to user and housetype IDs
         cur.execute('''CREATE TABLE IF NOT EXISTS
-            Preference(
-            preferenceID int NOT NULL PRIMARY KEY AUTO_INCREMENT,
-            userID int NOT NULL,
-            houseTypeID int NOT NULL,
-            districtCode int NOT NULL,
+            preference(
+            preference_id int NOT NULL PRIMARY KEY AUTO_INCREMENT,
+            user_id int NOT NULL,
+            house_type_id int NOT NULL,
+            district_code int NOT NULL,
             town varchar(50) NOT NULL,
-            FOREIGN KEY (userID) REFERENCES User(userID),
-            FOREIGN KEY (houseTypeID) REFERENCES HouseType(houseTypeID)
+            FOREIGN KEY (user_id) REFERENCES user(user_id),
+            FOREIGN KEY (house_type_id) REFERENCES housetype(house_type_id)
             );
         ''')
 
         #create rent table
         #foreign key to housetypeID
         cur.execute('''CREATE TABLE IF NOT EXISTS
-            Rent(
-            rentID int NOT NULL PRIMARY KEY AUTO_INCREMENT,
-            houseTypeID int NOT NULL,
-            rentalFees int NOT NULL,
-            postalDistrict int NOT NULL,
-            floorArea varchar(50) NOT NULL,
-            YearOfLease varchar(50) NOT NULL,
-            MonthOfLease varchar(50) NOT NULL,
-            FOREIGN KEY (houseTypeID) REFERENCES HouseType(houseTypeID)
+            rent(
+            rent_id int NOT NULL PRIMARY KEY AUTO_INCREMENT,
+            house_type_id int NOT NULL,
+            rental_fees int NOT NULL,
+            postal_district int NOT NULL,
+            floor_area varchar(50) NOT NULL,
+            year_of_lease int NOT NULL,
+            month_of_lease varchar(50) NOT NULL,
+            FOREIGN KEY (house_type_id) REFERENCES housetype(house_type_id)
             );
         ''')
 
         #create resale table
         #foreign key to housetypeID
         cur.execute('''CREATE TABLE IF NOT EXISTS
-            Resale(
-            sellID int NOT NULL PRIMARY KEY AUTO_INCREMENT,
-            houseTypeID int NOT NULL,
-            resalePrice int NOT NULL,
+            resale(
+            sell_id int NOT NULL PRIMARY KEY AUTO_INCREMENT,
+            house_type_id int NOT NULL,
+            resale_price int NOT NULL,
             town varchar(50) NOT NULL,
-            remainingLease varchar(50) NOT NULL,
-            floorArea int NOT NULL,
-            FOREIGN KEY (houseTypeID) REFERENCES HouseType(houseTypeID)
+            remaining_lease varchar(50) NOT NULL,
+            floor_area int NOT NULL,
+            FOREIGN KEY (house_type_id) REFERENCES HouseType(house_type_id)
         );
         ''')
 
@@ -97,13 +99,17 @@ def setUpTablesAndData():
         #rent rooms: 1,2,3,4,5,6,8
         #resale rooms: 1,2,3,4,5
 
-        #using replace instead of insert in case it has already been added before
-        cur.execute('''REPLACE INTO HouseType(houseTypeID, houseType, numberOfRooms)
-            VALUES(1, 'Rent', 1), (2, 'Rent', 2),(3, 'Rent',3), (4, 'Rent', 4), (5, 'Rent', 5), (6, 'Rent', 6), (7, 'Rent', 8),
-            (8, 'Resale', 1), (9, 'Resale', 2), (10, 'Resale', 3), (11, 'Resale', 4), (12, 'Resale', 5);
-        ''')
-
-        conn.commit()
+        #check if table is empty
+        cur.execute("SELECT 1 FROM housetype;")
+        if cur.rowcount == 0:
+            cur.execute('''INSERT INTO housetype(house_type_id, house_type, number_of_rooms)
+                VALUES(1, 'Rent', 1), (2, 'Rent', 2),(3, 'Rent',3), (4, 'Rent', 4), (5, 'Rent', 5), (6, 'Rent', 6), (7, 'Rent', 8),
+                (8, 'Resale', 1), (9, 'Resale', 2), (10, 'Resale', 3), (11, 'Resale', 4), (12, 'Resale', 5);
+            ''')
+            conn.commit()
+            print("Added data into housetype table")
+        else:
+            print("housetype table has already been populated")
 
     except mariadb.Error as e:
         print("Error during setup: ", {e})
@@ -114,64 +120,75 @@ def insertRentDataFromCSV():
     try:
         data = pd.read_csv("./rental data.csv")
         df = pd.DataFrame(data)
-        for row in df.itertuples():
-            try:
-                cur.execute('''
-                   INSERT INTO Rent(
-                   houseTypeID,
-                   rentalFees,
-                   postalDistrict,
-                   floorArea,
-                   YearOfLease,
-                   MonthOfLease)
+        print("Adding rent data")
 
-                   SELECT houseTypeID, ''' + str(row.monthly_gross_rent) + ", " + str(
-                    row.postal_district) + ", '" + row.floor_area +"', " + str(row.Lease_Commencement_Year) +", '" + row.Lease_Commencement_Month  +"' "+ ''' FROM HouseType
-                       WHERE houseType = 'Rent' AND numberOfRooms = ''' + str(row.no_of_bedroom))
-
-                conn.commit()
-            except:
-                print(cur.warnings)
-                raise
-    except mariadb.Error as e:
-        print("Error inserting Rent data: ", {e})
+        cur.execute("SELECT 1 FROM rent;")
+        if cur.rowcount == 0:
+            for row in df.itertuples():
+                try:
+                    cur.execute('''
+                        INSERT INTO rent(
+                        house_type_id,
+                        rental_fees,
+                        postal_district,
+                        floor_area,
+                        year_of_lease,
+                        month_of_lease)
+        
+                        SELECT house_type_id, ''' + str(row.monthly_gross_rent) + ", " + str(
+                        row.postal_district) + ", '" + row.floor_area + "', " + str(
+                        row.lease_commencement_year) + ", '" + row.lease_commencement_month + "' "
+                        + ''' FROM housetype
+                        WHERE house_type = 'Rent' AND number_of_rooms = ''' + str(row.no_of_bedroom))
+                except mariadb.Error as e:
+                    #print(cur.statement)
+                    print("Error inserting Rent data: ", {e})
+        else:
+            print("Data already exists in Rent table")
     except pandas.core.groupby.groupby.DataError as pe:
         print("Error in Pandas: ", {pe})
+    else: #if no exception then commit
+        conn.commit()
+        print("InsertRentData ran successfully")
 
 
 def insertResaleDataFromCSV():
     try:
         data = pd.read_csv("./resale data.csv")
         df = pd.DataFrame(data)
+        print("Adding resale data")
 
-        for row in df.itertuples():
-            try:
-                cur.execute('''
-                    INSERT INTO Resale(
-                    houseTypeID,
-                    resalePrice,
-                    town,
-                    remainingLease,
-                    floorArea)
-
-                    SELECT houseTypeID, ''' + str(
-                    row.resale_price) + ", '" + row.town + "' , '" + row.remaining_lease + "', " + str(
-                    row.floor_area_sqm) + ''' FROM HouseType
-                        WHERE houseType = 'Resale' AND numberOfRooms = ''' + row.flat_type[0])
-
-                conn.commit()
-            except:
-                print(cur.warnings)
-                raise
-    except mariadb.Error as e:
-        print("Error inserting Resale data: ", {e})
+        cur.execute("SELECT 1 FROM resale;")
+        if cur.rowcount == 0:
+            for row in df.itertuples():
+                try:
+                    cur.execute('''
+                        INSERT INTO resale(
+                        house_type_id,
+                        resale_price,
+                        town,
+                        remaining_lease,
+                        floor_area)
+    
+                        SELECT house_type_id, ''' + str(
+                        row.resale_price) + ", '" + row.town + "' , '" + row.remaining_lease + "', " + str(
+                        row.floor_area) + ''' FROM housetype
+                        WHERE house_type = 'Resale' AND number_of_rooms = ''' + row.flat_type[0])
+                except mariadb.Error as e:
+                    #print(cur.statement)
+                    print("Error inserting Resale data: ", {e})
+        else:
+            print("Data already exists in Resale table")
     except pandas.core.groupby.groupby.DataError as pe:
         print("Error in Pandas: ", {pe})
+    else: # if no exception then commit
+        conn.commit()
+        print("InsertResaleData ran successfully")
 
 
 def displayResaleData():
     try:
-        cur.execute("SELECT COUNT(*) FROM Resale")
+        cur.execute("SELECT COUNT(*) FROM resale")
 
         s = "<table style='border:1px solid red; border-collapse: collapse;'>"
         s = s + '''<tr style='border-bottom: 1px solid black'>
@@ -192,13 +209,13 @@ def displayResaleData():
         return s
 
     except mariadb.Error as e:
-        print("Error displaying Rent data: ", {e})
+        print("Error displaying Resale data: ", {e})
         return "<html><body>Error displaying data!</body></html>"
 
 
 def displayRentData():
     try:
-        cur.execute("SELECT COUNT(*) FROM Rent")
+        cur.execute("SELECT COUNT(*) FROM rent")
 
         s = "<table style='border:1px solid red; border-collapse: collapse;'>"
         s = s + '''<tr style='border-bottom: 1px solid black'>
@@ -225,7 +242,7 @@ def displayRentData():
 
 def testDisplayData():
     try:
-        cur.execute("SELECT r.rentalFees, r.postalDistrict, h.numberOfRooms, r.floorArea FROM Rent as r, HouseType as h WHERE r.houseTypeID = h.houseTypeID")
+        cur.execute("SELECT r.rental_fees, r.postal_district, h.number_of_rooms, r.floor_area FROM rent as r, housetype as h WHERE r.house_type_id = h.house_type_id")
         s = "<table style='border:1px solid red; border-collapse: collapse;'>"
         s = s + '''<tr style='border-bottom: 1px solid black'>
             <td style='padding: 10px; border-right: 1px solid blue'>Resale price/Resale</td>
@@ -251,26 +268,75 @@ def testDisplayData():
         return "<html><body>Error displaying test data!</body></html>"
 
 # uncomment if u wanna add to database and see if records are added
-@app.route("/")
+#@app.route("/")
 
-def index():
-    #testDisplayData()
+#def index():
     #setUpTablesAndData()
-    #insertRentDataFromCSV() #uncomment this if you want to insert data
-    #insertResaleDataFromCSV()
-    return "<html><body>" + displayRentData() + displayResaleData() + "</html></body>"
 
-#@app.route('/')
-#def Home():
- #   test()
-  #  return render_template('Home.html')
+    #insertRentDataFromCSV() #uncomment these two lines if you want to insert data
+    #insertResaleDataFromCSV()
+
+    #testDisplayData()
+
+    #return "<html><body>" + displayRentData() + displayResaleData() + "</html></body>"
+
+@app.route('/')
+def Home():
+    #test()
+    return render_template('Home.html')
+
+
 @app.route('/RentalGraphs')
 def GRental():
-    return render_template('Rental_Graph1.html')
+    return render_template('Rental_Graph.html')
 
-@app.route('/ResaleGraphs')
-def GResale():
+
+@app.route('/ResaleGraph')
+def Resaleindex():
     return render_template('Resale_Graph.html')
+
+
+@app.route('/AveragePriceResale')
+def GResale():
+    cur.execute("select town, avg(resale_price) from resale GROUP BY town;")
+    grouped = cur.fetchall()
+    town = []
+    resalePrice = []
+    for x in grouped:
+        town.append(x[0])
+        resalePrice.append(x[1])
+    df = pd.DataFrame(list(zip(town, resalePrice)), columns=['town', 'resale_price'])
+
+    fig = px.bar(df, x="town", y="resale_price", color='town', barmode="group")
+
+    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    header = "Resale Graph "
+    description = """
+    A graph showing the average price comparison between the different areas.
+    """
+    return render_template('AveragePriceResale.html', graphJSON=graphJSON, header=header, description=description)
+
+
+@app.route('/TotalResale')
+def GResale2():
+    cur.execute("  select distinct town,  COUNT(*) AS counts FROM resale group by town HAVING (COUNT(*)>1);")
+    grouped = cur.fetchall()
+    town = []
+    counts = []
+    for x in grouped:
+        town.append(x[0])
+        counts.append(x[1])
+    df = pd.DataFrame(list(zip(town, counts)), columns=['town', 'counts'])
+    fig = px.bar(df, x="town", y="counts", color='town', barmode="group")
+
+    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    header = "Resale Graph 2"
+    description = """
+    A graph showing the highest resale comparison between the different areas.
+    """
+    return render_template('TotalResale.html', graphJSON=graphJSON, header=header, description=description)
+
+
 
 
 
@@ -278,4 +344,4 @@ def GResale():
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
