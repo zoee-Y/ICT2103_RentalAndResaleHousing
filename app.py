@@ -4,6 +4,9 @@ from flask_navigation import Navigation
 import mariadb
 import sys
 import pandas as pd
+import json
+import plotly
+import plotly.express as px
 
 app = Flask(__name__)
 nav = Navigation(app)
@@ -11,7 +14,7 @@ nav = Navigation(app)
 nav.Bar('top', [
     nav.Item('Home', 'Home'),
     nav.Item('Rental', 'GRental'),
-    nav.Item('Resale', 'GResale'),
+    nav.Item('Resale', 'Resaleindex'),
     #add more if needed
 ])
 
@@ -265,29 +268,75 @@ def testDisplayData():
         return "<html><body>Error displaying test data!</body></html>"
 
 # uncomment if u wanna add to database and see if records are added
-@app.route("/")
+#@app.route("/")
 
-def index():
-    setUpTablesAndData()
+#def index():
+    #setUpTablesAndData()
 
     #insertRentDataFromCSV() #uncomment these two lines if you want to insert data
     #insertResaleDataFromCSV()
 
     #testDisplayData()
 
-    return "<html><body>" + displayRentData() + displayResaleData() + "</html></body>"
+    #return "<html><body>" + displayRentData() + displayResaleData() + "</html></body>"
 
-#@app.route('/')
-#def Home():
- #   test()
-  #  return render_template('Home.html')
+@app.route('/')
+def Home():
+    #test()
+    return render_template('Home.html')
+
+
 @app.route('/RentalGraphs')
 def GRental():
-    return render_template('Rental_Graph1.html')
+    return render_template('Rental_Graph.html')
 
-@app.route('/ResaleGraphs')
-def GResale():
+
+@app.route('/ResaleGraph')
+def Resaleindex():
     return render_template('Resale_Graph.html')
+
+
+@app.route('/AveragePriceResale')
+def GResale():
+    cur.execute("select town, avg(resale_price) from resale GROUP BY town;")
+    grouped = cur.fetchall()
+    town = []
+    resalePrice = []
+    for x in grouped:
+        town.append(x[0])
+        resalePrice.append(x[1])
+    df = pd.DataFrame(list(zip(town, resalePrice)), columns=['town', 'resale_price'])
+
+    fig = px.bar(df, x="town", y="resale_price", color='town', barmode="group")
+
+    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    header = "Resale Graph "
+    description = """
+    A graph showing the average price comparison between the different areas.
+    """
+    return render_template('AveragePriceResale.html', graphJSON=graphJSON, header=header, description=description)
+
+
+@app.route('/TotalResale')
+def GResale2():
+    cur.execute("  select distinct town,  COUNT(*) AS counts FROM resale group by town HAVING (COUNT(*)>1);")
+    grouped = cur.fetchall()
+    town = []
+    counts = []
+    for x in grouped:
+        town.append(x[0])
+        counts.append(x[1])
+    df = pd.DataFrame(list(zip(town, counts)), columns=['town', 'counts'])
+    fig = px.bar(df, x="town", y="counts", color='town', barmode="group")
+
+    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    header = "Resale Graph 2"
+    description = """
+    A graph showing the highest resale comparison between the different areas.
+    """
+    return render_template('TotalResale.html', graphJSON=graphJSON, header=header, description=description)
+
+
 
 
 
@@ -295,4 +344,4 @@ def GResale():
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
