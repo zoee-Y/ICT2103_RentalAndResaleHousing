@@ -25,7 +25,7 @@ try:
              host='127.0.0.1',
              port=3306,
              user='root',
-             password='Kemingonyx13',
+             password='root',
              database='RnRHousing')
 except mariadb.Error as e:
     print(f"An error occurred while connecting to MariaDB: ", {e})
@@ -346,7 +346,7 @@ def GRental():
         avgRentalFees1.append(x[0])
         year.append(x[1])
     AvgRentalOverTimeDF = pd.DataFrame(list(zip(avgRentalFees1, year)), columns=['Average_Rental_Fees', 'year'])
-    fig1 = px.line(AvgRentalOverTimeDF, x="year", y="Average_Rental_Fees", title='Rental Price Over Years')
+    fig1 = px.line(AvgRentalOverTimeDF, x="year", y="Average_Rental_Fees", title='Average Rental Price Over Years')
     graphJSON = json.dumps(fig1, cls=plotly.utils.PlotlyJSONEncoder)
     description1 = """
     A graph showing the increase of rental prices over the years.
@@ -360,41 +360,59 @@ def GRental():
         avgRentalFees2.append(x[1])
         postalDistrict.append(str(x[0]))
     AvgRentalByPostalDistrictDF = pd.DataFrame(list(zip(avgRentalFees2, postalDistrict)), columns=['Average_Rental_Fees', 'postal_district'])
-    print(AvgRentalByPostalDistrictDF)
-    fig2 = px.bar(AvgRentalByPostalDistrictDF, x="postal_district", y="Average_Rental_Fees", title='Rental Price by Postal District')
+    fig2 = px.bar(AvgRentalByPostalDistrictDF, x="postal_district", y="Average_Rental_Fees", title=' Average Rental Price by Postal District')
     graphJSON2 = json.dumps(fig2, cls=plotly.utils.PlotlyJSONEncoder)
     description2 = """
     A graph showing the average price comparison between the different areas.
     """
-    return render_template('Rental_Graph.html', graphJSON=graphJSON,graphJSON2=graphJSON2, description1=description1,description2 = description2)
+
+    cur.execute("select avg(r.rental_fees), h.number_of_rooms from rent as r inner join  housetype as h on h.house_type_id = r.house_type_id group by h.number_of_rooms;")
+    ResalePriceNoRooms = cur.fetchall()
+    print(ResalePriceNoRooms)
+    avgRentalFees3 = []
+    noOfRooms = []
+    for x in ResalePriceNoRooms:
+        avgRentalFees3.append(x[0])
+        noOfRooms.append(str(x[1]))
+    AvgRentalByRoomDF = pd.DataFrame(list(zip(avgRentalFees3, noOfRooms)), columns=['Average_Rental_Fees', 'noOfRooms'])
+    print(AvgRentalByRoomDF)
+    fig3 = px.bar(AvgRentalByRoomDF, x="noOfRooms", y="Average_Rental_Fees", title='Average Rental Fees by No of Rooms ')
+    graphJSON3 = json.dumps(fig3, cls=plotly.utils.PlotlyJSONEncoder)
+    description3 = """
+    A graph showing the average price comparison between the different areas.
+    """
+
+    return render_template('Rental_Graph.html', graphJSON=graphJSON,graphJSON2=graphJSON2,graphJSON3=graphJSON3, description1=description1,description2 = description2,description3 = description3 )
 
 @app.route('/ResaleTable')
 def resaleTable():
     if "filter" not in session:
-        cur.execute("select * from resale;")
+        cur.execute("select r.resale_price,r.town,r.remaining_lease,r.floor_area, h.number_of_rooms from resale as r join housetype as h on h.house_type_id = r.house_type_id ;")
         resale_data = cur.fetchall()
         resale_dict = {}
         for x in resale_data:
-            resale_dict[x[0]] = {"resale_price":x[2],
-                                 "town": x[3],
-                                 "remaining_lease":x[4],
-                                 "floor_sqm": x[5]
+            resale_dict[x[0]] = {"resale_price":x[0],
+                                 "town": x[1],
+                                 "remaining_lease":x[2],
+                                 "floor_sqm": x[3],
+                                 "no_of_rooms": x[4]
                                  }
 
         return render_template('Resale_Table.html', resale_dict = resale_dict)
 
     else:
         filter_dict = session["filter"]
-        filter_statement = "select * from resale where resale_price <= " + filter_dict["resalePrice"] + " and town ='" + filter_dict["town"] + "' and floor_area <= " + filter_dict["floorArea"] + ";"
+        filter_statement = "select r.resale_price,r.town,r.remaining_lease,r.floor_area, h.number_of_rooms from resale as r inner join  housetype as h on h.house_type_id = r.house_type_id where r.resale_price <= " + filter_dict["resalePrice"] + " and r.town ='" + filter_dict["town"] + "' and r.floor_area <= " + filter_dict["floorArea"] + " and h.number_of_rooms =  " + filter_dict["roomNo"] +";"
         cur.execute(filter_statement)
         resale_data = cur.fetchall()
         resale_dict = {}
 
         for x in resale_data:
-            resale_dict[x[0]] = {"resale_price":x[2],
-                                 "town": x[3],
-                                 "remaining_lease":x[4],
-                                 "floor_sqm": x[5]
+            resale_dict[x[0]] = {"resale_price":x[0],
+                                 "town": x[1],
+                                 "remaining_lease":x[2],
+                                 "floor_sqm": x[3],
+                                 "no_of_rooms": x[4]
                                  }
 
         return render_template('Resale_Table.html', resale_dict = resale_dict)
@@ -407,7 +425,8 @@ def updateResaleTable():
     resalePrice = request.form["resalePrice"]
     town = request.form["town"]
     floorArea = request.form["floorArea"]
-    session['filter'] = {"resalePrice":resalePrice,"town":town,"floorArea":floorArea}
+    roomNo = request.form["roomNo"]
+    session['filter'] = {"resalePrice":resalePrice,"town":town,"floorArea":floorArea, "roomNo":roomNo}
     return redirect(url_for("resaleTable"))
 
 
