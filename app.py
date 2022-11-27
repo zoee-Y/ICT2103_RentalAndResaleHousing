@@ -1,17 +1,22 @@
-from flask import Flask, render_template
+import pandas.core.groupby.groupby
+from flask import Flask, render_template, url_for, redirect, request, session, jsonify
 from flask_navigation import Navigation
 import mariadb
 import sys
 import pandas as pd
-import pandas.core.groupby.groupby
+import json
+import plotly
+import plotly.express as px
+import os
 
 app = Flask(__name__)
 nav = Navigation(app)
+app.secret_key = os.urandom(32)
 
 nav.Bar('top', [
     nav.Item('Home', 'Home'),
     nav.Item('Rental', 'GRental'),
-    nav.Item('Resale', 'GResale'),
+    nav.Item('Resale', 'Resaleindex'),
     #add more if needed
     nav.Item('Login', 'Login'),
     nav.Item('Register', 'Register'),
@@ -305,31 +310,153 @@ def index():
 
     return "<html><body>" + displayRentData() + displayResaleData() + "</html></body>"
 
-#@app.route('/')
-#def Home():
- #   test()
-  #  return render_template('Home.html')
+@app.route('/AveragePriceResale')
+def GResale():
+    cur.execute("select town, avg(resale_price) from resale GROUP BY town;")
+    grouped = cur.fetchall()
+    town = []
+    resalePrice = []
+    for x in grouped:
+        town.append(x[0])
+        resalePrice.append(x[1])
+    df = pd.DataFrame(list(zip(town, resalePrice)), columns=['town', 'resale_price'])
 
-# @app.route('/RentalGraphs')
-# def GRental():
-#     return render_template('Rental_Graph1.html')
-#
-# @app.route('/ResaleGraphs')
-# def GResale():
-#     return render_template('Resale_Graph.html')
+    fig = px.bar(df, x="town", y="resale_price", color='town', barmode="group")
+
+    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    header = "Resale Graph "
+    description = """
+    A graph showing the average price comparison between the different areas.
+    """
+    return render_template('AveragePriceResale.html', graphJSON=graphJSON, header=header, description=description)
+
+
+@app.route('/TotalResale')
+def GResale2():
+    cur.execute("  select distinct town,  COUNT(*) AS counts FROM resale group by town HAVING (COUNT(*)>1);")
+    grouped = cur.fetchall()
+    town = []
+    counts = []
+    for x in grouped:
+        town.append(x[0])
+        counts.append(x[1])
+    df = pd.DataFrame(list(zip(town, counts)), columns=['town', 'counts'])
+    fig = px.bar(df, x="town", y="counts", color='town', barmode="group")
+
+    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    header = "Resale Graph 2"
+    description = """
+    A graph showing the highest resale comparison between the different areas.
+    """
+    return render_template('TotalResale.html', graphJSON=graphJSON, header=header, description=description)
+
+@app.route('/Rental')
+def GRental():
+    cur.execute("select avg(rental_fees),year_of_lease from rent GROUP BY year_of_lease;")
+    avgRentalFees1 = []
+    year = []
+    AvgRentalOverTime = cur.fetchall()
+    for x in AvgRentalOverTime:
+        avgRentalFees1.append(x[0])
+        year.append(x[1])
+    AvgRentalOverTimeDF = pd.DataFrame(list(zip(avgRentalFees1, year)), columns=['Average_Rental_Fees', 'year'])
+    fig1 = px.line(AvgRentalOverTimeDF, x="year", y="Average_Rental_Fees", title='Average Rental Price Over Years')
+    graphJSON = json.dumps(fig1, cls=plotly.utils.PlotlyJSONEncoder)
+    description1 = """
+    A graph showing the increase of rental prices over the years.
+    """
+
+    cur.execute("select postal_district, avg(rental_fees) as average_rental_fees from rent Group By(postal_district) order by average_rental_fees  ;")
+    AvgRentalByPostalDistrict = cur.fetchall()
+    avgRentalFees2 = []
+    postalDistrict = []
+    for x in AvgRentalByPostalDistrict:
+        avgRentalFees2.append(x[1])
+        postalDistrict.append(str(x[0]))
+    AvgRentalByPostalDistrictDF = pd.DataFrame(list(zip(avgRentalFees2, postalDistrict)), columns=['Average_Rental_Fees', 'postal_district'])
+    fig2 = px.bar(AvgRentalByPostalDistrictDF, x="postal_district", y="Average_Rental_Fees", title=' Average Rental Price by Postal District')
+    graphJSON2 = json.dumps(fig2, cls=plotly.utils.PlotlyJSONEncoder)
+    description2 = """
+    A graph showing the average price comparison between the different areas.
+    """
+
+    cur.execute("select avg(r.rental_fees), h.number_of_rooms from rent as r inner join  housetype as h on h.house_type_id = r.house_type_id group by h.number_of_rooms;")
+    ResalePriceNoRooms = cur.fetchall()
+    print(ResalePriceNoRooms)
+    avgRentalFees3 = []
+    noOfRooms = []
+    for x in ResalePriceNoRooms:
+        avgRentalFees3.append(x[0])
+        noOfRooms.append(str(x[1]))
+    AvgRentalByRoomDF = pd.DataFrame(list(zip(avgRentalFees3, noOfRooms)), columns=['Average_Rental_Fees', 'noOfRooms'])
+    print(AvgRentalByRoomDF)
+    fig3 = px.bar(AvgRentalByRoomDF, x="noOfRooms", y="Average_Rental_Fees", title='Average Rental Fees by No of Rooms ')
+    graphJSON3 = json.dumps(fig3, cls=plotly.utils.PlotlyJSONEncoder)
+    description3 = """
+    A graph showing the average price comparison between the different areas.
+    """
+
+    return render_template('Rental_Graph.html', graphJSON=graphJSON,graphJSON2=graphJSON2,graphJSON3=graphJSON3, description1=description1,description2 = description2,description3 = description3 )
+
+@app.route('/ResaleTable')
+def resaleTable():
+    if "filter" not in session:
+        cur.execute("select r.resale_price,r.town,r.remaining_lease,r.floor_area, h.number_of_rooms from resale as r join housetype as h on h.house_type_id = r.house_type_id ;")
+        resale_data = cur.fetchall()
+        resale_dict = {}
+        for x in resale_data:
+            resale_dict[x[0]] = {"resale_price":x[0],
+                                 "town": x[1],
+                                 "remaining_lease":x[2],
+                                 "floor_sqm": x[3],
+                                 "no_of_rooms": x[4]
+                                 }
+
+        return render_template('Resale_Table.html', resale_dict = resale_dict)
+
+    else:
+        filter_dict = session["filter"]
+        filter_statement = "select r.resale_price,r.town,r.remaining_lease,r.floor_area, h.number_of_rooms from resale as r inner join  housetype as h on h.house_type_id = r.house_type_id where r.resale_price <= " + filter_dict["resalePrice"] + " and r.town ='" + filter_dict["town"] + "' and r.floor_area <= " + filter_dict["floorArea"] + " and h.number_of_rooms =  " + filter_dict["roomNo"] +";"
+        cur.execute(filter_statement)
+        resale_data = cur.fetchall()
+        resale_dict = {}
+
+        for x in resale_data:
+            resale_dict[x[0]] = {"resale_price":x[0],
+                                 "town": x[1],
+                                 "remaining_lease":x[2],
+                                 "floor_sqm": x[3],
+                                 "no_of_rooms": x[4]
+                                 }
+
+        return render_template('Resale_Table.html', resale_dict = resale_dict)
+
+
+@app.route("/updateResaleTable", methods=["POST"])
+def updateResaleTable():
+    if "filter" in session:
+        session.pop("filter")
+    resalePrice = request.form["resalePrice"]
+    town = request.form["town"]
+    floorArea = request.form["floorArea"]
+    roomNo = request.form["roomNo"]
+    session['filter'] = {"resalePrice":resalePrice,"town":town,"floorArea":floorArea, "roomNo":roomNo}
+    return redirect(url_for("resaleTable"))
 
 # TestLogin
-@app.route('/')
-def index():
+@app.route('/Login')
+def Login():
     return render_template("Login.html")
 @app.route('/Register')
-def new_user():
+def Register():
     return render_template("Register.html")
-@app.route('/Home')
-def home():
+@app.route('/')
+def Home():
     return render_template("Home.html")
 
-
+@app.route('/ResaleGraph')
+def Resaleindex():
+    return render_template('Resale_Graph.html')
 
 if __name__ == "__main__":
     app.run()
