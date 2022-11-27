@@ -18,7 +18,7 @@ nav.Bar('top', [
 ])
 
 try:
-    with open("rootpass.txt", "r") as f:
+    with open("dbconnection.txt", "r") as f:
         conn = mariadb.connect(
                  host=f.readline().strip(),
                  port=int(f.readline().strip()),
