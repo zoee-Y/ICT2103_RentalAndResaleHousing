@@ -20,11 +20,11 @@ nav.Bar('top', [
 try:
     with open("rootpass.txt", "r") as f:
         conn = mariadb.connect(
-                 host='127.0.0.1',
-                 port=3306,
-                 user='root',
-                 password=f.readline(),
-                 database='RnRHousing')
+                 host=f.readline().strip(),
+                 port=int(f.readline().strip()),
+                 user=f.readline().strip(),
+                 password=f.readline().strip(),
+                 database=f.readline().strip())
 except mariadb.Error as e:
     print(f"An error occurred while connecting to MariaDB: ", {e})
     sys.exit(1)
