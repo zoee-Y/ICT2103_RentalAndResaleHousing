@@ -1,5 +1,5 @@
 import pandas.core.groupby.groupby
-from flask import Flask, render_template, url_for, redirect, request, session, jsonify
+from flask import Flask, render_template, url_for, redirect, request, session, jsonify, flash
 from flask_navigation import Navigation
 import mariadb
 import sys
@@ -20,6 +20,7 @@ nav.Bar('top', [
     #add more if needed
     nav.Item('Login', 'Login'),
     nav.Item('Register', 'Register'),
+    nav.Item('Log out', 'Logout')
 ])
 
 try:
@@ -216,6 +217,10 @@ def insertResaleDataFromCSV():
         conn.commit()
         print("InsertResaleData ran successfully")
 
+#set up database
+setUpTablesAndData()
+insertRentDataFromCSV()
+insertResaleDataFromCSV()
 
 def displayResaleData():
     try:
@@ -461,14 +466,45 @@ def registerNewUser():
             conn.commit()
             return redirect(url_for("Login"))
 
+@app.route("/loginUser", methods=["POST"])
+def loginUser():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        try:
+            cur.execute("SELECT user_id FROM user WHERE" +
+            " username = '" + str(username) + "' AND password = '" + str(password) + "';")
+            if cur.rowcount == 0:
+                session["loggedIn"] = False
+                flash("Invalid username or password!", "LoginError")
+                return redirect(url_for("Login"))
+            elif cur.rowcount == 1:
+                session["loggedIn"] = True
+                session["loggedInUser"] = username
+                session["loggedInUserID"] = cur.fetchone()[0]
+                if session.get("loginMsg") == True:
+                    del session["loginMsg"]
+            else:
+                session["loggedIn"] = False
+                flash("Error occured!", "LoginError")
+                return redirect(url_for("Login"))
+        except mariadb.Error as e:
+            print(cur.statement)
+            print("Error logging in: ", {e})
+        else:
+            return redirect(url_for("Home"))
+
+@app.route("/Logout")
+def Logout():
+    if session.get("loggedIn") == True:
+        session["loggedIn"] = False
+        del session["loggedInUser"]
+        del session["loggedInUserID"]
+    return redirect(url_for("Login"))
+
 # TestLogin
 @app.route('/')
 def Login():
-    #set up database at first page
-    setUpTablesAndData()
-    insertRentDataFromCSV()
-    insertResaleDataFromCSV()
-
     return render_template("Login.html")
 
 @app.route('/Register')
@@ -477,11 +513,14 @@ def Register():
 
 @app.route('/Home')
 def Home():
-    return render_template("Home.html")
+    if session.get("loggedIn") == True:
+        return render_template("Home.html")
+    else:
+        redirect(url_for("Login"))
 
 @app.route('/ResaleGraph')
 def Resaleindex():
     return render_template('Resale_Graph.html')
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)

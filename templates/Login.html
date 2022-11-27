@@ -16,15 +16,28 @@
 <div>
     <main class="container">
         <h1>Member Login</h1>
-         <form action="" method="post">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% if category == "LoginError" %}
+                        <p style="color: red" class="{{ category }}">{{ message }}</p>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+         <form action="/loginUser" method="post">
              <div class = "form-group">
-                 <label>UserId:</label><br>
-                 <input class = "form-control" type="text" name="user_id" placeholder="Enter User Id"><br><br>
+                 <label>Username:</label><br>
+                 <input class = "form-control" id="username" required oninput="validate('username')" type="text" name="username" placeholder="Enter Username">
+                 <div id = "usernameError" style="display: none"></div>
              </div>
+             <br>
              <div class = "form-group">
                  <label>Password:</label><br>
-                 <input class = "form-control" type="password" name="password" placeholder="Enter password"><br><br>
+                 <input class = "form-control" id="password" required oninput="validate('password')" type="password" name="password" placeholder="Enter password">
+                 <div id = "passwordError" style="display: none"></div>
              </div>
+             <br>
              <div class = "form-group">
                  <button class="btn btn-primary" type="submit">Submit</button>
              </div>
@@ -41,6 +54,37 @@
     </main>
 
 </div>
+
+<script>
+    var formValid;
+
+    function validate(input) {
+        if (input == 'username') {
+            if (document.getElementById("username").value == "") {
+                document.getElementById("usernameError").style = "display: block; color: red";
+                document.getElementById("usernameError").innerHTML = "Username cannot be empty!";
+                formValid = false;
+            }
+            else {
+                document.getElementById("usernameError").style = "display: none";
+                formValid = true;
+            }
+        }
+
+        if (input == 'password') {
+            if (document.getElementById("password").value == "") {
+                document.getElementById("passwordError").style = "display: block; color: red";
+                document.getElementById("passwordError").innerHTML = "Password cannot be empty!";
+                formValid = false;
+            }
+            else {
+                document.getElementById("passwordError").style = "display: none";
+                formValid = true;
+            }
+        }
+    }
+</script>
+
 
 </body>
 </html>
