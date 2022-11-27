@@ -18,12 +18,13 @@ nav.Bar('top', [
 ])
 
 try:
-    conn = mariadb.connect(
-             host='127.0.0.1',
-             port=3306,
-             user='root',
-             password='Min13914',
-             database='RnRHousing')
+    with open("rootpass.txt", "r") as f:
+        conn = mariadb.connect(
+                 host='127.0.0.1',
+                 port=3306,
+                 user='root',
+                 password=f.readline(),
+                 database='RnRHousing')
 except mariadb.Error as e:
     print(f"An error occurred while connecting to MariaDB: ", {e})
     sys.exit(1)
@@ -132,27 +133,35 @@ def insertRentDataFromCSV():
         df = pd.DataFrame(data)
         print("Adding rent data")
 
+        datalist = []
+
         cur.execute("SELECT 1 FROM rent;")
         if cur.rowcount == 0:
-            for row in df.itertuples():
-                try:
-                    cur.execute('''
-                        INSERT INTO rent(
-                        house_type_id,
-                        rental_fees,
-                        postal_district,
-                        floor_area,
-                        year_of_lease,
-                        month_of_lease)
-        
-                        SELECT house_type_id, ''' + str(row.monthly_gross_rent) + ", " + str(
+            try:
+                for row in df.itertuples():
+
+                    cur.execute('''SELECT house_type_id, ''' + str(row.monthly_gross_rent) + ", " + str(
                         row.postal_district) + ", '" + row.floor_area + "', " + str(
                         row.lease_commencement_year) + ", '" + row.lease_commencement_month + "' "
-                        + ''' FROM housetype
-                        WHERE house_type = 'Rent' AND number_of_rooms = ''' + str(row.no_of_bedroom))
-                except mariadb.Error as e:
-                    #print(cur.statement)
-                    print("Error inserting Rent data: ", {e})
+                                + ''' FROM housetype
+                                WHERE house_type = 'Rent' AND number_of_rooms = ''' + str(row.no_of_bedroom))
+                    result = cur.fetchall()
+                    for r in result:
+                        datalist.append(r)
+
+                cur.executemany('''
+                    INSERT INTO rent(
+                    house_type_id,
+                    rental_fees,
+                    postal_district,
+                    floor_area,
+                    year_of_lease,
+                    month_of_lease)
+
+                    VALUES(?, ?, ?, ?, ?, ?)''', datalist)
+            except mariadb.Error as e:
+                #print(cur.statement)
+                print("Error inserting Rent data: ", {e})
         else:
             print("Data already exists in Rent table")
     except pandas.core.groupby.groupby.DataError as pe:
@@ -168,25 +177,32 @@ def insertResaleDataFromCSV():
         df = pd.DataFrame(data)
         print("Adding resale data")
 
+        datalist = []
+
         cur.execute("SELECT 1 FROM resale;")
         if cur.rowcount == 0:
-            for row in df.itertuples():
-                try:
-                    cur.execute('''
-                        INSERT INTO resale(
-                        house_type_id,
-                        resale_price,
-                        town,
-                        remaining_lease,
-                        floor_area)
-    
-                        SELECT house_type_id, ''' + str(
-                        row.resale_price) + ", '" + row.town + "' , '" + row.remaining_lease + "', " + str(
-                        row.floor_area) + ''' FROM housetype
-                        WHERE house_type = 'Resale' AND number_of_rooms = ''' + row.flat_type[0])
-                except mariadb.Error as e:
-                    #print(cur.statement)
-                    print("Error inserting Resale data: ", {e})
+            try:
+                for row in df.itertuples():
+                    cur.execute('''SELECT house_type_id, ''' + str(
+                            row.resale_price) + ", '" + row.town + "' , '" + row.remaining_lease + "', " + str(
+                            row.floor_area) + ''' FROM housetype
+                            WHERE house_type = 'Resale' AND number_of_rooms = ''' + row.flat_type[0])
+                    result = cur.fetchall()
+                    for r in result:
+                        datalist.append(r)
+
+                cur.executemany('''
+                    INSERT INTO resale(
+                    house_type_id,
+                    resale_price,
+                    town,
+                    remaining_lease,
+                    floor_area)
+
+                    VALUES(?,?,?,?,?)''', datalist)
+            except mariadb.Error as e:
+                #print(cur.statement)
+                print("Error inserting Resale data: ", {e})
         else:
             print("Data already exists in Resale table")
     except pandas.core.groupby.groupby.DataError as pe:
@@ -279,7 +295,6 @@ def testDisplayData():
 
 # uncomment if u wanna add to database and see if records are added
 #@app.route("/")
-
 def index():
     setUpTablesAndData()
 
