@@ -6,22 +6,35 @@
 </head>
 <!--<body>-->
 <body>
+<ul>
+    {% for item in nav.top %}
+    <li class="{{ 'active' if item.is_active else '' }}">
+        <a href="{{ item.url }}">{{ item.label }}</a>
+    </li>
+    {% endfor %}
+</ul>
 <div>
     <main class="container">
         <h1>Member Registration</h1>
-         <form action="" method="post">
+         <form action="/registerNewUser" method="post" onsubmit="return formValid">
              <div class = "form-group">
                  <label>Name:</label><br>
-                 <input class = "form-control" type="text" name="name" placeholder="Enter Your Name"><br><br>
+                 <input class = "form-control" id="name" required oninput="validate('name')" type="text" name="name" placeholder="Enter Your Name">
+                 <div id = "nameError" style="display: none"></div>
              </div>
+             <br>
              <div class = "form-group">
                  <label>Username:</label><br>
-                 <input class = "form-control" type="text" name="username" placeholder="Enter Your Username"><br><br>
+                 <input class = "form-control" id="username" required oninput="validate('username')" type="text" name="username" placeholder="Enter Your Username">
+                 <div id = "usernameError" style="display: none"></div>
              </div>
+             <br>
              <div class = "form-group">
                  <label>Password:</label><br>
-                 <input class = "form-control" type="password" name="password" placeholder="Enter password"><br><br>
+                 <input class = "form-control" id="password" required oninput="validate('password')" type="password" name="password" placeholder="Enter password">
+                 <div id = "passwordError" style="display: none"></div>
              </div>
+             <br>
              <div class = "form-group">
                  <button class="btn btn-primary" type="submit">Submit</button>
              </div>
@@ -33,6 +46,50 @@
     </main>
 
 </div>
+
+<script>
+    var formValid;
+
+    function validate(input) {
+        if (input == 'name') {
+            if (document.getElementById("name").value == "") {
+                document.getElementById("nameError").style = "display: block; color: red";
+                document.getElementById("nameError").innerHTML = "Name cannot be empty!";
+                formValid = false;
+            }
+            else {
+                document.getElementById("nameError").style = "display: none";
+                formValid = true;
+            }
+        }
+
+        if (input == 'username') {
+            if (document.getElementById("username").value == "") {
+                document.getElementById("usernameError").style = "display: block; color: red";
+                document.getElementById("usernameError").innerHTML = "Username cannot be empty!";
+                formValid = false;
+            }
+            else {
+                document.getElementById("usernameError").style = "display: none";
+                formValid = true;
+            }
+        }
+
+        if (input == 'password') {
+            if (document.getElementById("password").value == "") {
+                document.getElementById("passwordError").style = "display: block; color: red";
+                document.getElementById("passwordError").innerHTML = "Password cannot be empty!";
+                formValid = false;
+            }
+            else {
+                document.getElementById("passwordError").style = "display: none";
+                formValid = true;
+            }
+        }
+    }
+</script>
+
+
 </body>
 </html>
 

@@ -443,14 +443,39 @@ def updateResaleTable():
     session['filter'] = {"resalePrice":resalePrice,"town":town,"floorArea":floorArea, "roomNo":roomNo}
     return redirect(url_for("resaleTable"))
 
+
+#add user function
+@app.route("/registerNewUser", methods=["POST"])
+def registerNewUser():
+    if request.method == "POST":
+        username = request.form["username"]
+        name = request.form["name"]
+        password = request.form["password"]
+        try:
+            cur.execute("INSERT INTO user(username, password, name)" +
+            "VALUES('" + str(username) + "', '" + str(password) + "', '" + str(name) + "');")
+        except mariadb.Error as e:
+            #print(cur.statement)
+            print("Error adding user: ", {e})
+        else:
+            conn.commit()
+            return redirect(url_for("Login"))
+
 # TestLogin
-@app.route('/Login')
+@app.route('/')
 def Login():
+    #set up database at first page
+    setUpTablesAndData()
+    insertRentDataFromCSV()
+    insertResaleDataFromCSV()
+
     return render_template("Login.html")
+
 @app.route('/Register')
 def Register():
     return render_template("Register.html")
-@app.route('/')
+
+@app.route('/Home')
 def Home():
     return render_template("Home.html")
 
