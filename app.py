@@ -322,16 +322,16 @@ def index():
 
 @app.route('/AveragePriceResale')
 def GResale():
-    cur.execute("select town, avg(resale_price) from resale GROUP BY town;")
+    cur.execute("select town, avg(resale_Price) from resale GROUP BY town;")
     grouped = cur.fetchall()
     town = []
     resalePrice = []
     for x in grouped:
         town.append(x[0])
         resalePrice.append(x[1])
-    df = pd.DataFrame(list(zip(town, resalePrice)), columns=['town', 'resale_price'])
+    df = pd.DataFrame(list(zip(town, resalePrice)), columns=['town', 'resale_Price'])
 
-    fig = px.bar(df, x="town", y="resale_price", color='town', barmode="group")
+    fig = px.bar(df, x="town", y="resale_Price", color='town', barmode="group")
 
     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     header = "Resale Graph "
