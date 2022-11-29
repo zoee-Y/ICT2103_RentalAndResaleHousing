@@ -1,5 +1,5 @@
 127.0.0.1
 3306
 root
-root
+Min13914
 RnRHousing

@@ -14,7 +14,7 @@ nav = Navigation(app)
 app.secret_key = os.urandom(32)
 
 nav.Bar('top', [
-    nav.Item('Home', 'Home'),
+    nav.Item('Home', 'Preference'),
     nav.Item('Rental', 'GRental'),
     nav.Item('Resale', 'Resaleindex'),
     # add more if needed
@@ -560,7 +560,7 @@ def loginUser():
             print(cur.statement)
             print("Error logging in: ", {e})
         else:
-            return redirect(url_for("Home"))
+            return redirect(url_for("Preference"))
 
 
 @app.route("/Logout")
@@ -583,12 +583,38 @@ def Register():
     return render_template("Register.html")
 
 
-@app.route('/Home')
-def Home():
+# @app.route('/Home')
+# def Home():
+#     if session.get("loggedIn") == True:
+#         return render_template("Home.html")
+#     else:
+#         redirect(url_for("Login"))
+
+
+@app.route("/Preference")
+def Preference():
     if session.get("loggedIn") == True:
-        return render_template("Home.html")
+        return render_template("Preference.html")
     else:
         redirect(url_for("Login"))
+
+
+@app.route("/setPreference", methods=["POST"])
+def setPreference():
+    if request.method == "POST":
+        house_type_id = request.form["house_type_id"]
+        district_code = request.form["district_code"]
+        town = request.form["town"]
+        try:
+            cur.execute("UPDATE preference(preference_id, user_id, house_type_id, district_code, town)" +
+                        "SET('" + int(house_type_id) + "', '" + int(district_code) + "', '" + str(town) + "')" +
+                        "WHERE user_id = user_id;")
+        except mariadb.Error as e:
+            # print(cur.statement)
+            print("Error adding user: ", {e})
+        else:
+            conn.commit()
+            print("Preference Saved!")
 
 
 @app.route('/ResaleGraph')
