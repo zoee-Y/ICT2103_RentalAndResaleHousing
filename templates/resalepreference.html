@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %} Resale Flat Table {% endblock %}
+{% block head %}
+<script>
+function filter() {
+  var town = document.getElementById("townValue").value
+  var resalePrice = document.getElementById("ResalePriceValue").value
+  var floorArea = document.getElementById("FloorAreaValue").value
+  var roomNo = document.getElementById("roomNoValue").value
+   $.ajax({
+                url: "/updateResaleTable",
+                type: "POST",
+                dataType: 'text',
+                data:{
+                        "town" : town,
+                        "resalePrice":resalePrice,
+                        "floorArea":floorArea,
+                        "roomNo":roomNo
+                        } ,
+                success: function(){
+                        update()
+                },
+                error: function (xhr,thrownError) {
+                    alert(thrownError)
+                    alert('error');
+                }
+            })
+            return false;
+}
+
+function update(){
+    $("#ResaleData").load(location.href + " #ResaleData");
+}
+
+function updateSlider1(val){
+    document.getElementById("ResalePriceValue").innerHTML = val;
+}
+
+function updateSlider2(val){
+    document.getElementById("FloorAreaValue").innerHTML = val;
+}
+
+</script>
+
+<style>
+
+
+</style>
+{% endblock %}
+{% block content %}
+
+<ul>
+{% for item in nav.top %}
+    <li class="{{ 'active' if item.is_active else '' }}">
+        <a href="{{ item.url }}">{{ item.label }}</a>
+    </li>
+{% endfor %}
+</ul>
+
+<div class="uk-width-5-6 uk-margin-auto">
+
+  <div class="uk-container uk-container-expand">
+      <h1>Welcome {{ session["loggedInUser"] }}</h1>
+    <h1 class="uk-margin uk-margin-auto uk-text-center">Resale Data</h1>
+  </div>
+
+<br>
+    <br>
+    <div id="ResaleData">
+          <table class="uk-table uk-table-small uk-table-divider uk-table-striped" >
+            <thead>
+                <tr>
+                    <th>Resale Price</th>
+                    <th>Town</th>
+                    <th>Remaining Lease</th>
+                    <th>Floor Area (Square Metres)</th>
+                    <th>No. of Rooms</th>
+                </tr>
+            </thead>
+            <tbody class="uk-height-large" id='tableContent'>
+              {% for resale_flat in resale_dict %}
+              <tr>
+                <td>${{resale_dict[resale_flat]["resale_price"]}}</td>
+                  <td>{{resale_dict[resale_flat]["town"]}}</td>
+                  <td>{{resale_dict[resale_flat]["remaining_lease"]}}</td>
+                  <td>{{resale_dict[resale_flat]["floor_sqm"]}}</td>
+                   <td>{{resale_dict[resale_flat]["no_of_rooms"]}}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+        </table>
+    </div>
+      </div>
+
+
+</div>
+{% endblock %}

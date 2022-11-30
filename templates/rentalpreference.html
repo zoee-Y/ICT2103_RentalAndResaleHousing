@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %} Rental Flat Table {% endblock %}
+{% block head %}
+<style>
+
+
+</style>
+{% endblock %}
+{% block content %}
+
+<ul>
+{% for item in nav.top %}
+    <li class="{{ 'active' if item.is_active else '' }}">
+        <a href="{{ item.url }}">{{ item.label }}</a>
+    </li>
+{% endfor %}
+</ul>
+
+<div class="uk-width-5-6 uk-margin-auto">
+    <h1>Welcome {{ session["loggedInUser"] }}</h1>
+
+  <div class="uk-container uk-container-expand">
+    <h1 class="uk-margin uk-margin-auto uk-text-center">Rental Data</h1>
+  </div>
+
+<br>
+  <!-- Body -->
+    <div id="RentalData">
+          <table class="uk-table uk-table-small uk-table-divider uk-table-striped" >
+            <thead>
+                <tr>
+                    <th>Floor Area</th>
+                    <th>No. of Rooms</th>
+                    <th>Monthly Rent</th>
+                    <th>Postal District</th>
+                    <th>Lease Commencement Year</th>
+                    <th>Lease Commencement Month</th>
+                </tr>
+            </thead>
+            <tbody class="uk-height-large" id='tableContent'>
+              {% for rental_flat in rental_dict %}
+              <tr>
+                <td>${{rental_dict[rental_flat]["floor_area"]}}</td>
+                  <td>{{rental_dict[rental_flat]["no_of_rooms"]}}</td>
+                  <td>{{rental_dict[rental_flat]["monthly_gross_rent"]}}</td>
+                  <td>{{rental_dict[rental_flat]["postal_district"]}}</td>
+                   <td>{{rental_dict[rental_flat]["lease_commencement_year"]}}</td>
+                  <td>{{rental_dict[rental_flat]["lease_commencement_month"]}}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+        </table>
+    </div>
+      </div>
+
+
+</div>
+{% endblock %}

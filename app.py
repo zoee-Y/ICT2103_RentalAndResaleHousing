@@ -607,7 +607,51 @@ def Register():
 @app.route("/Home")
 def Home():
     if session.get("loggedIn") == True:
-        return render_template("Home.html")
+        cur.execute(
+            "SELECT p.house_type_id FROM preference AS p WHERE p.user_id = " + str(session["loggedInUserID"]) + ";")
+        if cur.rowcount > 0:
+            result = cur.fetchone()
+            for r in result:
+                if 0 < r <= 7: #rental
+                    cur.execute("SELECT p.district_code FROM preference AS p WHERE p.user_id = " + str(session["loggedInUserID"]) + ";")
+                    if cur.rowcount > 0:
+                        result = cur.fetchone()
+                        for x in result:
+                            cur.execute(
+                                "select r.floor_area,h.number_of_rooms, r.rental_fees, r.postal_district,r.year_of_lease,r.month_of_lease from rent as r join housetype as h on h.house_type_id = r.house_type_id WHERE h.house_type_id = " + str(r) + " AND r.postal_district = " + str(x) + ";")
+                            rental_data = cur.fetchall()
+                            rental_dict = {}
+                            for x in rental_data:
+                                rental_dict[x[0]] = {"floor_area": x[0],
+                                                     "no_of_rooms": x[1],
+                                                     "monthly_gross_rent": x[2],
+                                                     "postal_district": x[3],
+                                                     "lease_commencement_year": x[4],
+                                                     "lease_commencement_month": x[5]
+                                                     }
+
+                            return render_template('rentalpreference.html', rental_dict=rental_dict)
+                elif 8 <= r <= 12:
+                    cur.execute("SELECT p.town FROM preference AS p WHERE p.user_id = " + str(
+                        session["loggedInUserID"]) + ";")
+                    if cur.rowcount > 0:
+                        result = cur.fetchone()
+                        for x in result:
+                            cur.execute(
+                                "select r.resale_price,r.town,r.remaining_lease,r.floor_area, h.number_of_rooms from resale as r join housetype as h on h.house_type_id = r.house_type_id WHERE h.house_type_id = " + str(r) + " AND r.town = '" + str(x) + "';")
+                            resale_data = cur.fetchall()
+                            resale_dict = {}
+                            for x in resale_data:
+                                resale_dict[x[0]] = {"resale_price": x[0],
+                                                     "town": x[1],
+                                                     "remaining_lease": x[2],
+                                                     "floor_sqm": x[3],
+                                                     "no_of_rooms": x[4]
+                                                     }
+
+                            return render_template('resalepreference.html', resale_dict=resale_dict)
+        else:
+            return redirect(url_for("Profile"))
     else:
         redirect(url_for("Login"))
 
@@ -626,18 +670,32 @@ def updatePreference():
         house_type_id = request.form["house_type_id"]
         district_code = request.form["district_code"]
         town = request.form["town"]
-        try:
-            cur.execute("UPDATE preference " +
-                        "SET house_type_id = " + house_type_id + ", district_code = " + district_code + ", town = '" + town +"' " +
-                        "WHERE user_id = " + str(session["loggedInUserID"]) + ";")
-        except mariadb.Error as e:
-            # print(cur.statement)
-            print("Error adding user: ", {e})
+
+        cur.execute("SELECT 1 FROM preference WHERE user_id = " + str(session["loggedInUserID"]) + ";")
+        if cur.rowcount == 0:
+            list = [str(session["loggedInUserID"]), house_type_id, district_code, town]
+            try:
+                cur.execute("INSERT INTO preference(user_id, house_type_id, district_code, town) VALUES(?,?,?,?)", list)
+            except mariadb.Error as e:
+                print("Error adding preference", {e})
+            else:
+                conn.commit()
+                print("Preference Saved!")
+                flash("Preference saved!", "PreferenceSuccess")
+                return redirect(url_for("Profile"))
         else:
-            conn.commit()
-            print("Preference Saved!")
-            flash("Preference saved!", "PreferenceSuccess")
-            return redirect(url_for("Profile"))
+            try:
+                cur.execute("UPDATE preference " +
+                            "SET house_type_id = " + house_type_id + ", district_code = " + district_code + ", town = '" + town +"' " +
+                            "WHERE user_id = " + str(session["loggedInUserID"]) + ";")
+            except mariadb.Error as e:
+                # print(cur.statement)
+                print("Error updating preference: ", {e})
+            else:
+                conn.commit()
+                print("Preference Saved!")
+                flash("Preference saved!", "PreferenceSuccess")
+                return redirect(url_for("Profile"))
 
 
 @app.route('/ResaleGraph')
