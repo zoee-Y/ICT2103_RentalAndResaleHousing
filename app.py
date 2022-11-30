@@ -14,13 +14,14 @@ nav = Navigation(app)
 app.secret_key = os.urandom(32)
 
 nav.Bar('top', [
-    nav.Item('Home', 'Preference'),
+    nav.Item('Home', 'Home'),
     nav.Item('Rental', 'GRental'),
     nav.Item('Resale', 'Resaleindex'),
     # add more if needed
     nav.Item('Login', 'Login'),
     nav.Item('Register', 'Register'),
-    nav.Item('Log out', 'Logout')
+    nav.Item('Log out', 'Logout'),
+    nav.Item('View Profile', 'Profile')
 ])
 
 try:
@@ -128,17 +129,6 @@ def setUpTablesAndData():
             print("Added user001 into user table")
         else:
             print("user table has already been populated")
-
-        # create default preference
-        cur.execute("SELECT 1 FROM preference;")
-        if cur.rowcount == 0:
-            cur.execute('''INSERT INTO preference(preference_id, user_id, house_type_id, district_code, town)
-                            VALUES(001, 001, '1', '1', 'default');
-                ''')
-            conn.commit()
-            print("Added user001Preference into user table")
-        else:
-            print("preference table has already been populated")
 
     except mariadb.Error as e:
         print("Error during setup: ", {e})
@@ -534,6 +524,7 @@ def registerNewUser():
         username = request.form["username"]
         name = request.form["name"]
         password = request.form["password"]
+        # default value for newUser's preference
         house_type_id = 1
         district_code = 1
         town = "Default"
@@ -589,7 +580,7 @@ def loginUser():
             flash("Error occurred!", "LoginError")
             return redirect(url_for("Login"))
         else:
-            return redirect(url_for("Preference"))
+            return redirect(url_for("Home"))
 
 
 @app.route("/Logout")
@@ -612,24 +603,32 @@ def Register():
     return render_template("Register.html")
 
 
-@app.route("/Preference")
-def Preference():
+@app.route("/Home")
+def Home():
     if session.get("loggedIn") == True:
-        return render_template("Preference.html")
+        return render_template("Home.html")
     else:
         redirect(url_for("Login"))
 
 
-@app.route("/setPreference", methods=["POST"])
-def setPreference():
+@app.route("/Profile")
+def Profile():
+    if session.get("loggedIn") == True:
+        return render_template("Profile.html")
+    else:
+        redirect(url_for("Login"))
+
+
+@app.route("/updatePreference", methods=["POST"])
+def updatePreference():
     if request.method == "POST":
         house_type_id = request.form["house_type_id"]
         district_code = request.form["district_code"]
         town = request.form["town"]
         try:
-            cur.execute("UPDATE preference(preference_id, user_id, house_type_id, district_code, town)" +
-                        "SET('" + int(house_type_id) + "', '" + int(district_code) + "', '" + str(town) + "')" +
-                        "WHERE user_id = user_id;")
+            cur.execute("UPDATE preference " +
+                        "SET house_type_id = " + house_type_id + ", district_code = " + district_code + ", town = '" + town +"'" +")" +
+                        "WHERE user_id = ", session["loggedInUserID"])
         except mariadb.Error as e:
             # print(cur.statement)
             print("Error adding user: ", {e})

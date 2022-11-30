@@ -27,7 +27,10 @@
 </ul>
 <div>
     <main class="container">
-        <h1>Preference</h1>
+        <h1>Profile</h1>
+        <div class = "form-group">
+            <label class="form-control">Username: {{ session["loggedInUser"] }}</label><br>
+        </div>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -37,7 +40,8 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-         <form action="/setPreference" method="post">
+        <h2>Preference</h2>
+         <form action="/updatePreference" method="post">
              <div class = "form-group">
                  <label>House type:</label>
                  <input class = "form-control" id="house_type_id" required oninput="validate('house_type_id')" type="number" min="1" max="12" name="house_type_id" placeholder="1-12">
