@@ -13,15 +13,24 @@ app = Flask(__name__)
 nav = Navigation(app)
 app.secret_key = os.urandom(32)
 
-nav.Bar('top', [
+nav.Bar('Login-ed', [
     nav.Item('Home', 'Home'),
     nav.Item('Rental', 'GRental'),
     nav.Item('Resale', 'Resaleindex'),
+    # nav.Item('Login', 'Login'),
+    # nav.Item('Register', 'Register'),
+    nav.Item('Log out', 'Logout'),
+    nav.Item('View Profile', 'Profile')
+])
+nav.Bar('top', [
+    # nav.Item('Home', 'Home'),
+    # nav.Item('Rental', 'GRental'),
+    # nav.Item('Resale', 'Resaleindex'),
     # add more if needed
     nav.Item('Login', 'Login'),
     nav.Item('Register', 'Register'),
-    nav.Item('Log out', 'Logout'),
-    nav.Item('View Profile', 'Profile')
+    # nav.Item('Log out', 'Logout'),
+    # nav.Item('View Profile', 'Profile')
 ])
 
 try:
