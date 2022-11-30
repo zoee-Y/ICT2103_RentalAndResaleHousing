@@ -22,7 +22,8 @@ nav.Bar('bottom', [
     # nav.Item('Login', 'Login'),
     # nav.Item('Register', 'Register'),
     nav.Item('Log out', 'Logout'),
-    nav.Item('View Profile', 'Profile')
+    nav.Item('View Profile', 'Profile'),
+    nav.Item('ResaleTable', 'resaleTable')
 ])
 nav.Bar('top', [
     # nav.Item('Home', 'Home'),
