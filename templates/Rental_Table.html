@@ -2,10 +2,10 @@
 {% block title %} Rental Flat Table {% endblock %}
 {% block head %}
 <script>
-function filter() {
+function filter1() {
   var bedroomNo = document.getElementById("bedroomNoValue").value
   var monthlyGrossRent = document.getElementById("MonthlyGrossRentValue").value
-  var floorArea = document.getElementById("FloorAreaValue").value
+
    $.ajax({
                 url: "/updateRentalTable",
                 type: "POST",
@@ -13,7 +13,7 @@ function filter() {
                 data:{
                         "bedroomNo" : bedroomNo,
                         "monthlyGrossRent":monthlyGrossRent,
-                        "floorArea":floorArea,
+
                         } ,
                 success: function(){
                         update()
@@ -62,17 +62,10 @@ function updateSlider2(val){
          <div class="slidecontainer">
           <p>Rental Price Range</p>
           <input type="range" name="amountRange" min="2000" max="20000" value="5000" oninput="updateSlider1(this.value)",  />
-          <output id="">5000</output>
+          <output id="MonthlyGrossRentValue">5000</output>
     </div>
     </div>
 
-    <div>
-    <div class="slidecontainer">
-          <p>Floor Area Range</p>
-          <input type="range" name="amountRange" min="31" max="300" value="120" oninput="updateSlider2(this.value)"/>
-          <output id="FloorAreaValue">120</output>
-    </div>
-    </div>
        <div>
         <div class="uk-form-select" data-uk-form-select>
         <span>Select No. of Rooms</span>
@@ -88,7 +81,7 @@ function updateSlider2(val){
     </div>
        <div>
            <br>
-        <button class="uk-button uk-button-primary" onclick="filter()">Filter</button>
+        <button class="uk-button uk-button-primary" onclick="filter1()">Filter</button>
     </div>
 </div>
 
@@ -109,12 +102,12 @@ function updateSlider2(val){
             <tbody class="uk-height-large" id='tableContent'>
               {% for rental_flat in rental_dict %}
               <tr>
-                <td>${{rental_dict[rental_flat]["floor_area"]}}</td>
+                <td>{{rental_dict[rental_flat]["floor_area"]}}</td>
                   <td>{{rental_dict[rental_flat]["no_of_rooms"]}}</td>
-                  <td>{{rental_dict[rental_flat]["monthly_gross_rent]}}</td>
+                  <td>{{rental_dict[rental_flat]["monthly_gross_rent"]}}</td>
                   <td>{{rental_dict[rental_flat]["postal_district"]}}</td>
                    <td>{{rental_dict[rental_flat]["lease_commencement_year"]}}</td>
-                  <td>{{rental_dict[rental_flat]["lease_commencement_month]}}</td>
+                  <td>{{rental_dict[rental_flat]["lease_commencement_month"]}}</td>
               </tr>
               {% endfor %}
             </tbody>

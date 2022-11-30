@@ -478,9 +478,9 @@ def updateResaleTable():
 
 @app.route('/RentalTable')
 def rentalTable():
-    if "filter" not in session:
+    if "filter1" not in session:
         cur.execute(
-            "select r.floor_area,h.number_of_rooms, r.monthly_gross_rent, r.postal_district,r.lease_commencement_year,r.lease_commencement_month from rent as r join housetype as h on h.house_type_id = r.house_type_id;")
+            "select r.floor_area,h.number_of_rooms, r.rental_fees, r.postal_district,r.year_of_lease,r.month_of_lease from rent as r join housetype as h on h.house_type_id = r.house_type_id;")
         rental_data = cur.fetchall()
         rental_dict = {}
         for x in rental_data:
@@ -495,10 +495,10 @@ def rentalTable():
         return render_template('Rental_Table.html', rental_dict=rental_dict)
 
     else:
-        filter_dict = session["filter"]
-        filter_statement = "select r.floor_area,h.number_of_rooms, r.monthly_gross_rent, r.postal_district,r.lease_commencement_year, r.lease_commencement_month from rent as r inner join housetype as h on h.house_type_id = r.house_type_id where h.number_of_rooms = " + \
-                           filter_dict["bedroomNo"] + " and r.monthly_gross_rent <= " + filter_dict[
-                               "monthlyGrossRent"] + "' and r.floor_area <= " + filter_dict["floorArea"] + ";"
+        filter_dict = session["filter1"]
+        filter_statement = "select r.floor_area,h.number_of_rooms, r.rental_fees, r.postal_district,r.year_of_lease,r.month_of_lease from rent as r inner join housetype as h on h.house_type_id = r.house_type_id where h.number_of_rooms = " + \
+                           filter_dict["bedroomNo"] + " and r.rental_fees <= " + filter_dict[
+                               "monthlyGrossRent"] + " ;"
         cur.execute(filter_statement)
         rental_data = cur.fetchall()
         rental_dict = {}
@@ -517,12 +517,12 @@ def rentalTable():
 
 @app.route("/updateRentalTable", methods=["POST"])
 def updateRentalTable():
-    if "filter" in session:
-        session.pop("filter")
-    floorArea = request.form["floorArea"]
+    if "filter1" in session:
+        session.pop("filter1")
+
     monthlyGrossRent = request.form["monthlyGrossRent"]
     bedroomNo = request.form["bedroomNo"]
-    session['filter'] = {"floorArea": floorArea, "monthlyGrossRent": monthlyGrossRent, "bedroomNo": bedroomNo}
+    session['filter1'] = {"monthlyGrossRent": monthlyGrossRent, "bedroomNo": bedroomNo}
     return redirect(url_for("rentalTable"))
 
 
