@@ -543,7 +543,8 @@ def registerNewUser():
                 return redirect(url_for("Register"))
             else:
                 conn.commit()
-                return redirect(url_for("Login"))
+                flash("Registration successful!", "RegisterSuccess")
+                return redirect(url_for("Register"))
         else:
             print("Username already exists!")
             flash("Username already exists, please choose another!", "RegisterError")
@@ -627,14 +628,16 @@ def updatePreference():
         town = request.form["town"]
         try:
             cur.execute("UPDATE preference " +
-                        "SET house_type_id = " + house_type_id + ", district_code = " + district_code + ", town = '" + town +"'" +")" +
-                        "WHERE user_id = ", session["loggedInUserID"])
+                        "SET house_type_id = " + house_type_id + ", district_code = " + district_code + ", town = '" + town +"' " +
+                        "WHERE user_id = " + str(session["loggedInUserID"]) + ";")
         except mariadb.Error as e:
             # print(cur.statement)
             print("Error adding user: ", {e})
         else:
             conn.commit()
             print("Preference Saved!")
+            flash("Preference saved!", "PreferenceSuccess")
+            return redirect(url_for("Profile"))
 
 
 @app.route('/ResaleGraph')

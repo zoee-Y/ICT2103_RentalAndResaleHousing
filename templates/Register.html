@@ -22,6 +22,9 @@
                     {% if category == "RegisterError" %}
                         <p style="color: red" class="{{ category }}">{{ message }}</p>
                     {% endif %}
+                    {% if category == "RegisterSuccess" %}
+                        <p style="color: green" class="{{ category }}">{{ message }}</p>
+                    {% endif %}
                 {% endfor %}
             {% endif %}
         {% endwith %}
@@ -50,7 +53,7 @@
          </form>
         <p>
             Already a member? Please go to
-            <a href="/Login">Login</a>.
+            <a href="/">Login</a>.
         </p>
     </main>
 

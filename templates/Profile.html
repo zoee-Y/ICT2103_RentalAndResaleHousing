@@ -37,6 +37,9 @@
                     {% if category == "Error" %}
                         <p style="color: red" class="{{ category }}">{{ message }}</p>
                     {% endif %}
+                    {% if category == "PreferenceSuccess" %}
+                        <p style="color: green" class="{{ category }}">{{ message }}</p>
+                    {% endif %}
                 {% endfor %}
             {% endif %}
         {% endwith %}
