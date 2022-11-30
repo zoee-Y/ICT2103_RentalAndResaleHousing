@@ -69,7 +69,7 @@ def setUpTablesAndData():
             house_type_id int NOT NULL,
             district_code int NOT NULL,
             town varchar(50) NOT NULL,
-            FOREIGN KEY (user_id) REFERENCES user(user_id),
+            FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE,
             FOREIGN KEY (house_type_id) REFERENCES housetype(house_type_id)
             );
         ''')
@@ -534,8 +534,6 @@ def registerNewUser():
             try:
                 cur.execute("INSERT INTO user(username, password, name)" +
                             "VALUES('" + str(username) + "', '" + str(password) + "', '" + str(name) + "');")
-                #cur.execute("INSERT INTO preference(house_type_id, district_code, town)" +
-                #            "VALUES('" + int(house_type_id) + "','" + int(district_code) + "', '" + str(town) + "');")
             except mariadb.Error as e:
                 # print(cur.statement)
                 print("Error adding user: ", {e})
@@ -628,7 +626,7 @@ def updatePreference():
         town = request.form["town"]
         try:
             cur.execute("UPDATE preference " +
-                        "SET house_type_id = " + house_type_id + ", district_code = " + district_code + ", town = '" + town +"' " +
+                        "SET house_type_id = " + house_type_id + ", district_code = " + district_code + ", town = '" + town + "' " +
                         "WHERE user_id = " + str(session["loggedInUserID"]) + ";")
         except mariadb.Error as e:
             # print(cur.statement)
@@ -638,6 +636,23 @@ def updatePreference():
             print("Preference Saved!")
             flash("Preference saved!", "PreferenceSuccess")
             return redirect(url_for("Profile"))
+
+
+@app.route("/deleteUser", methods=["POST"])
+def deleteUser():
+    if request.method == "POST":
+        try:
+            cur.execute("DELETE FROM user " +
+                        "WHERE user_id = " + str(session["loggedInUserID"]) + ";")
+        except mariadb.Error as e:
+            # print(cur.statement)
+            print("Error removing user: ", {e})
+            return "<html><body>Error deleting account!</body></html>"
+
+        else:
+            conn.commit()
+            print("User Removed!")
+            return redirect(url_for("Login"))
 
 
 @app.route('/ResaleGraph')

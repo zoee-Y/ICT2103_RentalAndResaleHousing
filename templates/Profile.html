@@ -31,6 +31,12 @@
         <div class = "form-group">
             <label class="form-control">Username: {{ session["loggedInUser"] }}</label><br>
         </div>
+        <form action="/deleteUser" method="post">
+            <div class = "form-group">
+                <button class="btn btn-primary" type="submit">Delete Account</button>
+            </div>
+        </form>
+
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
