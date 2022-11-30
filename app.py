@@ -566,7 +566,8 @@ def loginUser():
             elif cur.rowcount == 1:
                 session["loggedIn"] = True
                 session["loggedInUser"] = username
-                session["loggedInUserID"] = cur.fetchone()[0]
+                for r in cur.fetchone():
+                    session["loggedInUserID"] = r
                 if session.get("loginMsg") == True:
                     del session["loginMsg"]
             else:
