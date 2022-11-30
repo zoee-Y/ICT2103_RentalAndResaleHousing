@@ -534,9 +534,15 @@ def registerNewUser():
         username = request.form["username"]
         name = request.form["name"]
         password = request.form["password"]
+        house_type_id = 1
+        district_code = 1
+        town = "Default"
         try:
             cur.execute("INSERT INTO user(username, password, name)" +
                         "VALUES('" + str(username) + "', '" + str(password) + "', '" + str(name) + "');")
+            cur.execute("INSERT INTO preference(house_type_id, district_code, town)" +
+                        "VALUES('" + int(house_type_id) + "','" + int(district_code) + "', '" + str(town) + "');")
+
         except mariadb.Error as e:
             # print(cur.statement)
             print("Error adding user: ", {e})
