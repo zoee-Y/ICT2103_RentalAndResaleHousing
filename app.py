@@ -21,9 +21,10 @@ nav.Bar('bottom', [
     nav.Item('Resale', 'Resaleindex'),
     # nav.Item('Login', 'Login'),
     # nav.Item('Register', 'Register'),
+    nav.Item('ResaleTable', 'resaleTable'),
     nav.Item('Log out', 'Logout'),
-    nav.Item('View Profile', 'Profile'),
-    nav.Item('ResaleTable', 'resaleTable')
+    nav.Item('View Profile', 'Profile')
+
 ])
 nav.Bar('top', [
     # nav.Item('Home', 'Home'),

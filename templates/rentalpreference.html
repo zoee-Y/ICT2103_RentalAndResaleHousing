@@ -1,20 +1,42 @@
+<style>
+  ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #333;
+  }
+  li {
+  float: left;
+  }
+  li a:hover {
+  background-color: #111;
+  }
+  li a {
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  }
+</style>
 {% extends 'base.html' %}
 {% block title %} Rental Flat Table {% endblock %}
 {% block head %}
-<style>
 
-
-</style>
 {% endblock %}
 {% block content %}
 
 <ul>
-{% for item in nav.top %}
+    {% for item in nav.bottom %}
     <li class="{{ 'active' if item.is_active else '' }}">
         <a href="{{ item.url }}">{{ item.label }}</a>
     </li>
-{% endfor %}
+    {% endfor %}
 </ul>
+
+
+
 
 <div class="uk-width-5-6 uk-margin-auto">
     <h1>Welcome {{ session["loggedInUser"] }}</h1>
