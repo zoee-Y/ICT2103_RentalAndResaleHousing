@@ -10,7 +10,34 @@
     body{
         background: white;
     }
+    ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+    }
+    li {
+    float: left;
+    }
+    li a:hover {
+    background-color: #111;
+    }
+    li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    }
 </style>
+<ul>
+    {% for item in nav.bottom %}
+    <li class="{{ 'active' if item.is_active else '' }}">
+        <a href="{{ item.url }}">{{ item.label }}</a>
+    </li>
+    {% endfor %}
+</ul>
 <head style="font-family:arial, sans-serif">
     <h1 style="background-color:navajowhite; padding:10px;color: black; position:absolute; margin:auto">
         Resale Graphs & Tables
