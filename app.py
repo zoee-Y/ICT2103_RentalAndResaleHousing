@@ -118,7 +118,7 @@ def setUpTablesAndData():
         else:
             print("housetype table has already been populated")
 
-        # create default user001 godbless mes
+        # create default user001
         cur.execute("SELECT 1 FROM user;")
         if cur.rowcount == 0:
             cur.execute('''INSERT INTO user(user_id, username, password, name)
@@ -128,6 +128,17 @@ def setUpTablesAndData():
             print("Added user001 into user table")
         else:
             print("user table has already been populated")
+
+        # create default preference
+        cur.execute("SELECT 1 FROM preference;")
+        if cur.rowcount == 0:
+            cur.execute('''INSERT INTO preference(preference_id, user_id, house_type_id, district_code, town)
+                            VALUES(001, 001, '1', '1', 'default');
+                ''')
+            conn.commit()
+            print("Added user001Preference into user table")
+        else:
+            print("preference table has already been populated")
 
     except mariadb.Error as e:
         print("Error during setup: ", {e})
@@ -581,14 +592,6 @@ def Login():
 @app.route('/Register')
 def Register():
     return render_template("Register.html")
-
-
-# @app.route('/Home')
-# def Home():
-#     if session.get("loggedIn") == True:
-#         return render_template("Home.html")
-#     else:
-#         redirect(url_for("Login"))
 
 
 @app.route("/Preference")
