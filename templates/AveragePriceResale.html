@@ -20,8 +20,35 @@
   #des {
       text-align: center;
   }
+  ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+    }
+    li {
+    float: left;
+    }
+    li a:hover {
+    background-color: #111;
+    }
+    li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    }
 </style>
 <body>
+<ul>
+    {% for item in nav.bottom %}
+    <li class="{{ 'active' if item.is_active else '' }}">
+        <a href="{{ item.url }}">{{ item.label }}</a>
+    </li>
+    {% endfor %}
+</ul>
 <h1>{{header}}</h1>
 <h6><a href="/ResaleGraph">Return to Resale Graphs Page</a></h6>
 <div id="chart" class="chart"></div> <br>
