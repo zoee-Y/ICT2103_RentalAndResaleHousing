@@ -15,11 +15,31 @@
     text-align: left;
     padding: 1px;
     }
+    ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+    }
+    li {
+    float: left;
+    }
+    li a:hover {
+    background-color: #111;
+    }
+    li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    }
     </style>
 </head>
 <body>
 <ul>
-    {% for item in nav.top %}
+    {% for item in nav.bottom %}
     <li class="{{ 'active' if item.is_active else '' }}">
         <a href="{{ item.url }}">{{ item.label }}</a>
     </li>
@@ -31,6 +51,12 @@
         <div class = "form-group">
             <label class="form-control">Username: {{ session["loggedInUser"] }}</label><br>
         </div>
+        <form action="/deleteUser" method="post">
+            <div class = "form-group">
+                <button class="btn btn-primary" type="submit">Delete Account</button>
+            </div>
+        </form>
+
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}

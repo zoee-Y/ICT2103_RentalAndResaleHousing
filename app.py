@@ -13,15 +13,26 @@ app = Flask(__name__)
 nav = Navigation(app)
 app.secret_key = os.urandom(32)
 
-nav.Bar('top', [
+# bottom nav.bar is logined
+# top nav.bar is not logined
+nav.Bar('bottom', [
     nav.Item('Home', 'Home'),
     nav.Item('Rental', 'GRental'),
     nav.Item('Resale', 'Resaleindex'),
+    # nav.Item('Login', 'Login'),
+    # nav.Item('Register', 'Register'),
+    nav.Item('Log out', 'Logout'),
+    nav.Item('View Profile', 'Profile')
+])
+nav.Bar('top', [
+    # nav.Item('Home', 'Home'),
+    # nav.Item('Rental', 'GRental'),
+    # nav.Item('Resale', 'Resaleindex'),
     # add more if needed
     nav.Item('Login', 'Login'),
     nav.Item('Register', 'Register'),
-    nav.Item('Log out', 'Logout'),
-    nav.Item('View Profile', 'Profile')
+    # nav.Item('Log out', 'Logout'),
+    # nav.Item('View Profile', 'Profile')
 ])
 
 try:
@@ -69,7 +80,7 @@ def setUpTablesAndData():
             house_type_id int NOT NULL,
             district_code int NOT NULL,
             town varchar(50) NOT NULL,
-            FOREIGN KEY (user_id) REFERENCES user(user_id),
+            FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE,
             FOREIGN KEY (house_type_id) REFERENCES housetype(house_type_id)
             );
         ''')
@@ -469,9 +480,9 @@ def updateResaleTable():
 
 @app.route('/RentalTable')
 def rentalTable():
-    if "filter" not in session:
+    if "filter1" not in session:
         cur.execute(
-            "select r.floor_area,h.number_of_rooms, r.monthly_gross_rent, r.postal_district,r.lease_commencement_year,r.lease_commencement_month from rent as r join housetype as h on h.house_type_id = r.house_type_id;")
+            "select r.floor_area,h.number_of_rooms, r.rental_fees, r.postal_district,r.year_of_lease,r.month_of_lease from rent as r join housetype as h on h.house_type_id = r.house_type_id;")
         rental_data = cur.fetchall()
         rental_dict = {}
         for x in rental_data:
@@ -486,10 +497,10 @@ def rentalTable():
         return render_template('Rental_Table.html', rental_dict=rental_dict)
 
     else:
-        filter_dict = session["filter"]
-        filter_statement = "select r.floor_area,h.number_of_rooms, r.monthly_gross_rent, r.postal_district,r.lease_commencement_year, r.lease_commencement_month from rent as r inner join housetype as h on h.house_type_id = r.house_type_id where h.number_of_rooms = " + \
-                           filter_dict["bedroomNo"] + " and r.monthly_gross_rent <= " + filter_dict[
-                               "monthlyGrossRent"] + "' and r.floor_area <= " + filter_dict["floorArea"] + ";"
+        filter_dict = session["filter1"]
+        filter_statement = "select r.floor_area,h.number_of_rooms, r.rental_fees, r.postal_district,r.year_of_lease,r.month_of_lease from rent as r inner join housetype as h on h.house_type_id = r.house_type_id where h.number_of_rooms = " + \
+                           filter_dict["bedroomNo"] + " and r.rental_fees <= " + filter_dict[
+                               "monthlyGrossRent"] + " ;"
         cur.execute(filter_statement)
         rental_data = cur.fetchall()
         rental_dict = {}
@@ -508,12 +519,12 @@ def rentalTable():
 
 @app.route("/updateRentalTable", methods=["POST"])
 def updateRentalTable():
-    if "filter" in session:
-        session.pop("filter")
-    floorArea = request.form["floorArea"]
+    if "filter1" in session:
+        session.pop("filter1")
+
     monthlyGrossRent = request.form["monthlyGrossRent"]
     bedroomNo = request.form["bedroomNo"]
-    session['filter'] = {"floorArea": floorArea, "monthlyGrossRent": monthlyGrossRent, "bedroomNo": bedroomNo}
+    session['filter1'] = {"monthlyGrossRent": monthlyGrossRent, "bedroomNo": bedroomNo}
     return redirect(url_for("rentalTable"))
 
 
@@ -534,8 +545,6 @@ def registerNewUser():
             try:
                 cur.execute("INSERT INTO user(username, password, name)" +
                             "VALUES('" + str(username) + "', '" + str(password) + "', '" + str(name) + "');")
-                #cur.execute("INSERT INTO preference(house_type_id, district_code, town)" +
-                #            "VALUES('" + int(house_type_id) + "','" + int(district_code) + "', '" + str(town) + "');")
             except mariadb.Error as e:
                 # print(cur.statement)
                 print("Error adding user: ", {e})
@@ -696,6 +705,23 @@ def updatePreference():
                 print("Preference Saved!")
                 flash("Preference saved!", "PreferenceSuccess")
                 return redirect(url_for("Profile"))
+
+
+@app.route("/deleteUser", methods=["POST"])
+def deleteUser():
+    if request.method == "POST":
+        try:
+            cur.execute("DELETE FROM user " +
+                        "WHERE user_id = " + str(session["loggedInUserID"]) + ";")
+        except mariadb.Error as e:
+            # print(cur.statement)
+            print("Error removing user: ", {e})
+            return "<html><body>Error deleting account!</body></html>"
+
+        else:
+            conn.commit()
+            print("User Removed!")
+            return redirect(url_for("Login"))
 
 
 @app.route('/ResaleGraph')
