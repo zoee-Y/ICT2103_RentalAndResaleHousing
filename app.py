@@ -13,7 +13,9 @@ app = Flask(__name__)
 nav = Navigation(app)
 app.secret_key = os.urandom(32)
 
-nav.Bar('Login-ed', [
+# bottom nav.bar is logined
+# top nav.bar is not logined
+nav.Bar('bottom', [
     nav.Item('Home', 'Home'),
     nav.Item('Rental', 'GRental'),
     nav.Item('Resale', 'Resaleindex'),
