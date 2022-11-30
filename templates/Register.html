@@ -16,6 +16,15 @@
 <div>
     <main class="container">
         <h1>Member Registration</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% if category == "RegisterError" %}
+                        <p style="color: red" class="{{ category }}">{{ message }}</p>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
          <form action="/registerNewUser" method="post" onsubmit="return formValid">
              <div class = "form-group">
                  <label>Name:</label><br>

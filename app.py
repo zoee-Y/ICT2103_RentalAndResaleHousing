@@ -537,18 +537,27 @@ def registerNewUser():
         house_type_id = 1
         district_code = 1
         town = "Default"
-        try:
-            cur.execute("INSERT INTO user(username, password, name)" +
-                        "VALUES('" + str(username) + "', '" + str(password) + "', '" + str(name) + "');")
-            cur.execute("INSERT INTO preference(house_type_id, district_code, town)" +
-                        "VALUES('" + int(house_type_id) + "','" + int(district_code) + "', '" + str(town) + "');")
 
-        except mariadb.Error as e:
-            # print(cur.statement)
-            print("Error adding user: ", {e})
+        cur.execute("SELECT username FROM user WHERE username = '" + str(username) + "';")
+        if cur.rowcount == 0:
+            try:
+                cur.execute("INSERT INTO user(username, password, name)" +
+                            "VALUES('" + str(username) + "', '" + str(password) + "', '" + str(name) + "');")
+                #cur.execute("INSERT INTO preference(house_type_id, district_code, town)" +
+                #            "VALUES('" + int(house_type_id) + "','" + int(district_code) + "', '" + str(town) + "');")
+            except mariadb.Error as e:
+                # print(cur.statement)
+                print("Error adding user: ", {e})
+                flash("Error occurred!", "RegisterError")
+                return redirect(url_for("Register"))
+            else:
+                conn.commit()
+                return redirect(url_for("Login"))
         else:
-            conn.commit()
-            return redirect(url_for("Login"))
+            print("Username already exists!")
+            flash("Username already exists, please choose another!", "RegisterError")
+            return redirect(url_for("Register"))
+
 
 
 @app.route("/loginUser", methods=["POST"])
@@ -572,11 +581,13 @@ def loginUser():
                     del session["loginMsg"]
             else:
                 session["loggedIn"] = False
-                flash("Error occured!", "LoginError")
+                flash("Error occurred!", "LoginError")
                 return redirect(url_for("Login"))
         except mariadb.Error as e:
-            print(cur.statement)
+            #print(cur.statement)
             print("Error logging in: ", {e})
+            flash("Error occurred!", "LoginError")
+            return redirect(url_for("Login"))
         else:
             return redirect(url_for("Preference"))
 
